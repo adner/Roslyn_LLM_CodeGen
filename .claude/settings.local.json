@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(if not exist .vscode mkdir .vscode)"
+      "Bash(if not exist .vscode mkdir .vscode)",
+      "Bash(git rm:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
