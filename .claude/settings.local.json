@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(if not exist .vscode mkdir .vscode)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

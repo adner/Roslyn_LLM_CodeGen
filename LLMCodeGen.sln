@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Roslyn_LLM_CodeGen", "Roslyn_LLM_CodeGen.csproj", "{42BC7956-9B6E-D950-48DA-C75C703C93E3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{42BC7956-9B6E-D950-48DA-C75C703C93E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{42BC7956-9B6E-D950-48DA-C75C703C93E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{42BC7956-9B6E-D950-48DA-C75C703C93E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{42BC7956-9B6E-D950-48DA-C75C703C93E3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {00FF978F-9003-4BFA-B6A0-8529814B9602}
+	EndGlobalSection
+EndGlobal
