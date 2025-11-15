@@ -2,11 +2,11 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": ".NET Core Launch (console)",
+            "name": "Debug Roslyn_LLM_CodeGen",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/bin/Debug/net9.0/Roslyn_LLM_CodeGen.dll",
+            "program": "${workspaceFolder}/RoslynLLMCodeGen/bin/Debug/net9.0/Roslyn_LLM_CodeGen.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",
@@ -16,6 +16,26 @@
             "name": ".NET Core Attach",
             "type": "coreclr",
             "request": "attach"
+        },
+        {
+            "name": "Launch DevUI",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build DevUI",
+            "program": "${workspaceFolder}/DevUI/bin/Debug/net9.0/DevUI.dll",
+            "cwd": "${workspaceFolder}/DevUI",
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
+                "uriFormat": "%s/devui"
+            },
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "justMyCode": true,
+            "stopAtEntry": false
         }
     ]
 }

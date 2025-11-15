@@ -7,7 +7,19 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/Roslyn_LLM_CodeGen.csproj",
+                "${workspaceFolder}/RoslynLLMCodeGen/Roslyn_LLM_CodeGen.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary;ForceNoAlign"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "build DevUI",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/DevUI/DevUI.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary;ForceNoAlign"
             ],
@@ -19,7 +31,7 @@
             "type": "process",
             "args": [
                 "publish",
-                "${workspaceFolder}/Roslyn_LLM_CodeGen.csproj",
+                "${workspaceFolder}/RoslynLLMCodeGen/Roslyn_LLM_CodeGen.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary;ForceNoAlign"
             ],
@@ -33,7 +45,7 @@
                 "watch",
                 "run",
                 "--project",
-                "${workspaceFolder}/Roslyn_LLM_CodeGen.csproj"
+                "${workspaceFolder}/RoslynLLMCodeGen/Roslyn_LLM_CodeGen.csproj"
             ],
             "problemMatcher": "$msCompile"
         }
