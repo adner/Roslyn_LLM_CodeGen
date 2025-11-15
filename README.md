@@ -1,67 +1,41 @@
 # Roslyn LLM Code Generation
 
-An innovative approach to LLM tool calling that significantly reduces context window usage by having the LLM generate and execute C# code instead of using traditional function calling schemas.
+A demonstration of an approach to LLM tool calling that has the potential of reducing context window usage by having the LLM generate and execute C# code instead of using traditional function calling. This was inspired by the [article](https://www.anthropic.com/engineering/code-execution-with-mcp) posted by Anthropic that addresses this topic, as well as the pretty funny [flamewar](https://www.youtube.com/watch?v=1piFEKA9XL0) that followed, where the imminent death of MCP was predicted, among other things.
 
-## Project Purpose
+**The problem:**
+- Each tool that the LLM uses requires that a tool schema definition is passed to the LLM, in every call.
+- Multiple functions = lots of tokens consumed, potentially blowing up the context window which leads to bad results.
+- Potentielly very large tool call resulta are passed between tool calls - also adding to the context.
 
-This project explores how custom code generation can be used to achieve more efficient LLM tool calls and reduce context window usage. Instead of providing detailed function schemas to the LLM (which consume loads of tokens per tool), the agent is instructed to write C# code that directly calls available methods.
+**The idea:**
+- Let the LLM generate code that orchestrates multiple tool calls (from code). 
+- This has the benefit of keeping a lot of the tokens out of the context (tool call results, etc).
 
-## Key Innovation
+**The project in this repo:**
+- Exposes a single tool: `RunScript(string code)` that allows the LLM to invoke dynamically generated C# code at runtime.
+- A simple framework for making custom tools available to be called by the LLM, from the custom code that it generates.
 
-**Traditional Approach Problem:**
-- Each function requires extensive schema definition (name, parameters, descriptions, types, examples)
-- Multiple functions = hundreds or thousands of tokens consumed
-- Context window fills up quickly with tool definitions
+**Result:** Some tokens saved, lots of tool calls saved. 
 
-**This Project's Solution:**
-- Expose a single tool: `RunScript(string code)`
-- Provide brief instructions mentioning available methods (e.g., `GetWeather(string location)`)
-- LLM generates complete C# code to accomplish tasks
-- Roslyn compiles and executes the code with access to pre-approved methods
-
-**Result:** Substantial token savings while maintaining flexibility and type safety.
+**The insight:** Probably a lot of tokens (and performance) to be gained, in some circumstances. Is MCP dead? Nah, probably not. :-)
 
 ## Project Structure
 
 ### ScriptRunnerLib
-Core library providing generic C# script execution using Roslyn.
+Core library providing generic C# script execution using Roslyn functionality.
 
-**Key Features:**
-- Generic `ScriptRunner<T>` class that accepts a globals object
-- Uses Microsoft.CodeAnalysis.CSharp.Scripting (Roslyn) for runtime compilation
-- Safe execution with error handling and compilation diagnostics
+- Generic `ScriptRunner<T>` class that accepts a class that has member methods that can be invoked from dynamically generated code.
+- Uses [Microsoft.CodeAnalysis.CSharp.Scripting ](https://www.nuget.org/packages/Microsoft.CodeAnalysis.CSharp.Scripting/)(Roslyn) for runtime compilation
 - Configurable assemblies and imports
 
-**Location:** [ScriptRunnerLib/ScriptRunnerLib.cs](ScriptRunnerLib/ScriptRunnerLib.cs)
-
-### RoslynLLMCodeGen
-Console application demonstrating the code generation approach.
-
-**Features:**
-- Simple command-line interface
-- Integration with OpenAI GPT-5.1
-- Single `RunScript` tool exposed to the agent
-- Comprehensive agent instructions for code generation
-
-**Location:** [RoslynLLMCodeGen/Program.cs](RoslynLLMCodeGen/Program.cs)
-
-### DevUI
-Web-based development UI for testing and comparing agents.
-
-**Features:**
-- ASP.NET Core web application
-- Interactive UI at `https://localhost:57966/devui`
-- Two agent configurations for comparison:
-  - Code generation agent (ultra-efficient)
-  - Traditional tool call agent (baseline)
-
-**Location:** [DevUI/Program.cs](DevUI/Program.cs)
+### Microsoft Agent Framework and DevUI
+I wanted to try out the new C# flavor of the [DevUI](https://github.com/microsoft/agent-framework/tree/main/dotnet/src/Microsoft.Agents.AI.DevUI) that is part of the [Microsoft Agent Framework](https://github.com/microsoft/agent-framework). 
 
 ## How It Works
 
 ### 1. Agent Configuration
 
-The agent is configured with a single tool:
+The agent is configured with a single tool, `RunScript`, that can be called by the LLM to run C# scripts:
 
 ```csharp
 var agent = new OpenAIClient(apiKey)
@@ -73,22 +47,21 @@ var agent = new OpenAIClient(apiKey)
     );
 ```
 
-### 2. Minimal Instructions
+There are two agents defined that can be used in DevUI:
 
-Instead of verbose function schemas, provide concise instructions:
+- **Gpt51_code_gen_agent** - An agent that uses code generation.
+- **Gpt51_tool_call_agent** - An agent that uses good old tool calling.
+  
+To the code-gen agent, we supply instructions that tells it how to do code generation. I created two instructions:
 
-```markdown
-You are a C# Code Execution Agent. When a user request can be solved with code,
-generate a complete C# script and execute it with the RunScript tool.
+- [agentinstructions.md](https://github.com/adner/Roslyn_LLM_CodeGen/blob/main/DevUI/agentInstructions.md) - Very verbose and details instructions, that yield good results and works most of the time.
+- [agentinstructions_2.md](https://github.com/adner/Roslyn_LLM_CodeGen/blob/main/DevUI/agentInstructions_2.md) - An attempt at a minimal, compact instruction that still generates working code (most of the time). This is the instruction used in the video in my [LinkedIn post](https://www.linkedin.com/posts/andreasadner_efficient-llm-tool-calling-using-dynamic-activity-7395423560443498497-Jwu6?utm_source=share&utm_medium=member_desktop&rcm=ACoAAACM8rsBEgQIrYgb4NZAbnxwfDRk_Tu5e3w).
 
-The host environment already provides a global function:
-    string GetWeather(string location)
-You must ONLY CALL GetWeather; NEVER declare, define, or wrap it.
-```
+The main entry point is [DevUI/Program.cs](https://github.com/adner/Roslyn_LLM_CodeGen/blob/main/DevUI/Program.cs), so this is where to make changes.
 
-### 3. Code Generation
+### Code Generation
 
-When a user asks "What's the weather in Uppsala, Stockholm, and Dublin?", the agent generates:
+When a user asks "What's the weather in Uppsala, Stockholm, and Dublin?", (if we are lucky) the agent generates:
 
 ```csharp
 var results = new List<string>
@@ -100,48 +73,13 @@ var results = new List<string>
 return string.Join("\n", results);
 ```
 
-### 4. Execution
-
 The `ScriptRunner` compiles and executes the code using Roslyn, returning the results.
 
-## Security Model
+## Building and running
 
-The project uses a "whitelist" security model through the `ScriptGlobals` pattern:
-
-```csharp
-public class ScriptGlobals
-{
-    public string GetWeather(string location)
-    {
-        // Only safe, pre-approved operations
-        return $"Weather data for {location}";
-    }
-}
-```
-
-**Safety Features:**
-- Scripts run in isolated Roslyn environment
-- Only methods explicitly exposed in ScriptGlobals are accessible
-- No file system, network, or OS access by default
-- Compilation errors caught and returned as messages
-- Runtime exceptions handled gracefully
-
-## Technologies
-
-- **.NET 9.0** - Latest .NET framework
-- **Roslyn** (Microsoft.CodeAnalysis.CSharp.Scripting) - C# compiler as a service
-- **Microsoft.Agents.AI** - Agent framework (preview)
-- **OpenAI GPT-5.1** - Language model
-- **ASP.NET Core** - Web hosting for DevUI
-
-## Getting Started
-
-### Prerequisites
-
+Requires:
 - .NET 9.0 SDK
 - OpenAI API key
-
-### Configuration
 
 1. Set your OpenAI API key in `appsettings.json`:
 
@@ -152,77 +90,11 @@ public class ScriptGlobals
   }
 }
 ```
-
-### Running the Console App
-
-```bash
-cd RoslynLLMCodeGen
-dotnet run
-```
-
-### Running the DevUI
+Running the DevUI:
 
 ```bash
 cd DevUI
 dotnet run
 ```
-
 Then navigate to `https://localhost:57966/devui`
 
-## Project Benefits
-
-1. **Massive Token Savings** - Single tool vs. many function schemas
-2. **Flexibility** - LLM can combine operations in complex ways
-3. **Type Safety** - Roslyn compilation catches errors at runtime
-4. **Extensibility** - Easy to add new capabilities via ScriptGlobals
-5. **Transparency** - Generated code is visible and debuggable
-6. **Reduced Latency** - Fewer tokens = faster API calls
-
-## Key Files
-
-| File | Description |
-|------|-------------|
-| [ScriptRunnerLib/ScriptRunnerLib.cs](ScriptRunnerLib/ScriptRunnerLib.cs) | Core script execution engine |
-| [RoslynLLMCodeGen/Program.cs](RoslynLLMCodeGen/Program.cs) | Console application |
-| [RoslynLLMCodeGen/agentInstructions.md](RoslynLLMCodeGen/agentInstructions.md) | Comprehensive agent instructions |
-| [DevUI/Program.cs](DevUI/Program.cs) | Web UI application |
-| [DevUI/agentInstructions_2.md](DevUI/agentInstructions_2.md) | Ultra-concise optimized instructions |
-
-## Future Extensibility
-
-The architecture allows easy expansion:
-- Add more methods to `ScriptGlobals`
-- Include additional assemblies in `ScriptOptions`
-- Add custom imports for domain-specific libraries
-- Implement streaming results
-- Add code sandboxing and resource limits
-
-## Example Usage
-
-**User:** "What is the weather in Uppsala, Stockholm and Dublin?"
-
-**Agent generates:**
-```csharp
-var results = new List<string>
-{
-    GetWeather("Uppsala"),
-    GetWeather("Stockholm"),
-    GetWeather("Dublin")
-};
-return string.Join("\n", results);
-```
-
-**Output:**
-```
-Weather data for Uppsala
-Weather data for Stockholm
-Weather data for Dublin
-```
-
-## License
-
-This project is for research and educational purposes, exploring efficient LLM tool calling patterns.
-
-## Contributing
-
-This is an experimental project demonstrating a novel approach to LLM agent architectures. Feel free to explore and adapt the concepts to your own use cases.

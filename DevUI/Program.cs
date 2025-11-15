@@ -17,7 +17,7 @@ var scriptRunner = new ScriptRunner<ScriptGlobals>(new ScriptGlobals());
 
 builder.Services.AddChatClient(chatClient.AsIChatClient());
 
-string agentInstructions = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "agentInstructions_2.md"));
+string agentInstructions = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "agentInstructions_2.md")); //Switch this to agentinsIntructions.md for better hitrate.
 // Register your agents
 builder.AddAIAgent("Gpt51_code_gen_agent", agentInstructions).WithAITool(AIFunctionFactory.Create(scriptRunner.RunScript));
 builder.AddAIAgent("Gpt51_tool_call_agent", "You are a helpful agent that can get the weather at a location by calling the GetWeather tool. Always respond in the format: Location, Temperature, Weather type (one word).").WithAITool(AIFunctionFactory.Create(new ScriptGlobals().GetWeather));
@@ -51,11 +51,12 @@ public enum WeatherCondition
     Stormy
 }
 
+// Extend this with any other methods you want the LLM to call from the generated code, and don't forget to update the agent instructions to inform the agent about the tool.
 public class ScriptGlobals
 {
     private static readonly Random _random = new Random();
 
-    [Description("Gets the weather in a specific location.")]
+    [Description("Gets the weather in a specific location.")] //The Description attribute is needed for the tool calling agent, not needed for the codegen agent. 
     public string GetWeather(string location)
     {
         // Call your own services/repositories here
