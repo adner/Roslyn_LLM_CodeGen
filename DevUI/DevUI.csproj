@@ -17,4 +17,13 @@
     <ProjectReference Include="..\ScriptRunnerLib\ScriptRunnerLib.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="agentInstructions.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+     <None Update="agentInstructions_2.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

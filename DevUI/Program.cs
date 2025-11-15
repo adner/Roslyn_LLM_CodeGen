@@ -13,9 +13,14 @@ string apiKey = builder.Configuration["OpenAI:ApiKey"] ?? throw new InvalidOpera
 
 var chatClient = new OpenAIClient(apiKey).GetChatClient("gpt-5.1");
 
+var scriptRunner = new ScriptRunner<ScriptGlobals>(new ScriptGlobals());
+
 builder.Services.AddChatClient(chatClient.AsIChatClient());
+
+string agentInstructions = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "agentInstructions_2.md"));
 // Register your agents
-builder.AddAIAgent("Gpt51_assistant", "You are a helpful assistant.").WithAITool(AIFunctionFactory.Create(GetWeather));
+builder.AddAIAgent("Gpt51_code_gen_agent", agentInstructions).WithAITool(AIFunctionFactory.Create(scriptRunner.RunScript));
+builder.AddAIAgent("Gpt51_tool_call_agent", "You are a helpful agent that can get the weather at a location by calling the GetWeather tool. Always respond in the format: Location, Temperature, Weather type (one word).").WithAITool(AIFunctionFactory.Create(new ScriptGlobals().GetWeather));
 
 // Register services for OpenAI responses and conversations (also required for DevUI)
 builder.Services.AddOpenAIResponses();
@@ -35,8 +40,29 @@ if (builder.Environment.IsDevelopment())
 
 app.Run();
 
-[Description("Call this tool when the user wants to know the weather.")]
-static string GetWeather()
+public enum WeatherCondition
 {
-    return "The weather is bad!";
+    Sunny,
+    Cloudy,
+    Rainy,
+    Snowy,
+    Foggy,
+    Windy,
+    Stormy
+}
+
+public class ScriptGlobals
+{
+    private static readonly Random _random = new Random();
+
+    [Description("Gets the weather in a specific location.")]
+    public string GetWeather(string location)
+    {
+        // Call your own services/repositories here
+        int temperature = _random.Next(-10, 31); // -10 to 30 inclusive
+        var weatherConditions = Enum.GetValues<WeatherCondition>();
+        var randomWeather = weatherConditions[_random.Next(weatherConditions.Length)];
+
+        return $"The weather in {location} is {temperature} degrees and {randomWeather.ToString().ToLower()}.";
+    }
 }
