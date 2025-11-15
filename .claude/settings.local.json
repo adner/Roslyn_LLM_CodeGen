@@ -3,7 +3,8 @@
     "allow": [
       "Bash(if not exist .vscode mkdir .vscode)",
       "Bash(git rm:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []
